@@ -1,2 +1,66 @@
 ---
+- hosts: jenkins
+  become: yes
+  tasks:
+    - name: Update all packages
+      apt:
+        name: '*'
+        state: latest
+        update_cache: yes
 
+    # Jenkins 
+    - name: Add java repository from PPA
+      apt_repository:
+        repo: ppa:openjdk-r/ppa
+
+    - name: Install Java for Jenkins
+      apt:
+        name: openjdk-11-jdk
+        state: latest
+        update_cache: yes
+
+    - name: Create keyrings directory
+      file:
+        path: /usr/share/keyrings
+        state: directory
+
+    - name: Import keyring for Jenkins
+      get_url:
+        url: https://pkg.jenkins.io/debian-stable/jenkins.io.key
+        dest: /usr/share/keyrings/jenkins-keyring.asc
+        force: yes
+  
+    - name: Add Jenkins repository into sources list
+      apt_repository:
+        repo: deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian-stable binary/
+        state: present
+
+    - name: Install Jenkins LTS
+      apt:
+        name: jenkins
+        state: latest
+        update_cache: yes
+
+    - name: Start jenkins
+      ansible.builtin.systemd:
+        name: jenkins
+        state: started
+
+    # Docker
+    - name: Install prerequisites for Docker repository
+      apt:
+        name: ['apt-transport-https', 'ca-certificates', 'curl', 'gnupg2', 'software-properties-common']
+        update_cache: yes
+        
+    - name: Add Docker GPG key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+    
+    - name: Add Docker APT repository
+      apt_repository:
+        repo: deb [arch=amd64] https://download.docker.com/{{ ansible_system | lower }}/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable
+  
+    - name: Install Docker CE
+      apt:
+        name: ['docker-ce', 'docker-ce-cli', 'containerd.io']
+        update_cache: yes
