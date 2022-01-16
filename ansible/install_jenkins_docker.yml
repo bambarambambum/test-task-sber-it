@@ -8,11 +8,6 @@
         state: latest
         update_cache: yes
 
-    # Jenkins 
-    - name: Add java repository from PPA
-      apt_repository:
-        repo: ppa:openjdk-r/ppa
-
     - name: Install Java for Jenkins
       apt:
         name: openjdk-11-jdk
@@ -64,3 +59,24 @@
       apt:
         name: ['docker-ce', 'docker-ce-cli', 'containerd.io']
         update_cache: yes
+
+    # Enable external connection to Docker
+    - name: Create docker.service directory
+      file:
+        path: /etc/systemd/system/docker.service.d
+        state: directory
+
+    - name: Create override for Docker with new option
+      ansible.builtin.lineinfile:
+        path: /etc/systemd/system/docker.service.d/override.conf
+        line: |
+           [Service]
+           ExecStart=
+           ExecStart=/usr/bin/dockerd -H fd:// -H tcp://0.0.0.0:2375
+        create: yes
+
+    - name: Restart docker service with daemon-reload
+      ansible.builtin.systemd:
+        state: restarted
+        daemon_reload: yes
+        name: docker
