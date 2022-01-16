@@ -1,0 +1,36 @@
+pipeline {
+    agent {
+        label 'master'
+    }
+    stages {
+
+        stage('Checkout') {
+            steps {
+                sh 'git clone https://github.com/bambarambambum/test-task-sber-it.git'
+            }
+        }
+
+        stage('Build') {
+            steps {
+                dir ('test-task-sber-it/python') {
+                    sh 'docker build -t simple-python .'
+                }
+            }
+        }
+
+        stage('Run') {
+            steps {
+                sh "docker run -d simple-python"
+            }
+        }
+
+        stage('Clean') {
+            steps {
+                dir ('test-task-sber-it') {
+                    deleteDir()
+                }
+            }
+        }
+        
+    }
+}
