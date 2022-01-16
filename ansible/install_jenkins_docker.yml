@@ -80,3 +80,12 @@
         state: restarted
         daemon_reload: yes
         name: docker
+
+    - name: Adding Jenkins user to group docker
+      user:
+        name: jenkins
+        groups: docker
+        append: yes
+
+    - name: Reboot server
+      reboot:
